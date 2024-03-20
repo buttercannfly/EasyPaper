@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
-
 const AiWritingForm = () => {
   const [topic, setTopic] = useState("");
   const [outline, setOutline] = useState("");
@@ -37,8 +36,8 @@ const AiWritingForm = () => {
   };
   return (
     <div className="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
-      <h2 className="text-3xl font-bold mb-2">神笔AI写作</h2>
-      <p className="text-gray-500 mb-8">300万大学生都在用的AI写作平台</p>
+      <h2 className="text-3xl font-bold mb-2">EasyPaper</h2>
+      <p className="text-gray-500 mb-8">AI thesis, paper, report</p>
 
       <div className="mb-8">
         <div className="flex items-center mb-4">
@@ -65,7 +64,7 @@ const AiWritingForm = () => {
           <TextareaAutosize
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             rows={4}
-            placeholder="生成论文初稿专业"
+            placeholder="生成论文初稿"
             value={outline}
             onChange={(e) => setOutline(e.target.value)}
           ></TextareaAutosize>
