@@ -1,6 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import { chatCompletion } from "@/lib/utils";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { chatCompletion } from "../utils/chat";
 
 type Data = {
   result: string;
