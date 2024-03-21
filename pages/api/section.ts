@@ -3,10 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { chatCompletion } from "../utils/chat";
 
 type Data = {
-  abstract: string;
-  title: string;
-  desc: string;
-  count: number;
+  result: string;
 };
 
 export default async function handler(

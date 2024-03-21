@@ -47,7 +47,7 @@ const AiWritingForm = () => {
         },
         body: JSON.stringify({
           message:
-            "请为以下论文题目生成摘要, 字数要求在2000字, <" +
+            "请为以下论文题目生成摘要, 字数要求在300-400字, <" +
             topic +
             ">, 不要添加任何解释、说明或评论。请严格按照以下JSON返回结果" +
             ' {"abstract":"", "keywords":[] }',
