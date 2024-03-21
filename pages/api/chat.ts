@@ -10,8 +10,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  const { message } = req.body;
+  if (req.method === "POST") {
+    const { message } = req.body;
 
-  const reply = await chatCompletion(message);
-  res.status(200).json({ result: reply });
+    const reply = await chatCompletion(message);
+    res.status(200).json({ result: reply });
+  }
 }
