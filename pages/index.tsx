@@ -1,3 +1,4 @@
+import { IOutline, IPart } from "@/type";
 import React, { useEffect, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -6,21 +7,11 @@ interface IAbstract {
   keywords: string[];
 }
 
-interface IOutline {
-  chapter_name: string;
-  content: ISection[];
-}
-
-interface ISection {
-  section_name: string;
-  description: string;
-  word_count: number;
-}
-
 const AiWritingForm = () => {
   const [topic, setTopic] = useState("");
   const [outline, setOutline] = useState<IOutline[]>([]);
   const [show_outline, setShowOutline] = useState<string>("");
+  const [showDownload, setDownload] = useState<boolean>(false);
   const [abstract, setAbstract] = useState<IAbstract>({
     abstract: "",
     keywords: [],
@@ -47,10 +38,13 @@ const AiWritingForm = () => {
         },
         body: JSON.stringify({
           message:
-            "请为以下论文题目生成摘要, 字数要求在300-400字, <" +
+            "请为以下论文题目生成摘要,  <" +
             topic +
-            ">, 不要添加任何解释、说明或评论。请严格按照以下JSON返回结果" +
-            ' {"abstract":"", "keywords":[] }',
+            ">, 不要添加任何解释、说明或评论。请严格按照以下两个要求进行回复" +
+            "1. 生成字数至少300字" +
+            "2. 请严格按照以下JSON返回结果" +
+            ' {"abstract":"", "keywords":[] }' +
+            "3. 保证结果符合JSON格式定义",
         }),
       });
 
@@ -79,7 +73,7 @@ const AiWritingForm = () => {
         },
         body: JSON.stringify({
           message:
-            "你现在要写一篇总字数两万字的论文,请先为以下论文题目生成1000字的大纲, 并且安排好各个小节的字数以满足总字数两万以上的要求, <" +
+            "你现在要写一篇总字数两万字的论文,请先为以下论文题目生成1000字的大纲, 包含中内外研究现状, 并且安排好各个小节的字数以满足总字数两万以上的要求, <" +
             topic +
             ">, 摘要为<" +
             abs +
@@ -112,39 +106,115 @@ const AiWritingForm = () => {
     setLoading(false);
   };
 
+  const generateSection = async (
+    mainTitle: string,
+    desc: string,
+    title: string,
+    count: number
+  ) => {
+    try {
+      const response = await fetch("/api/section", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mainTitle,
+          desc,
+          title,
+          count,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("API request failed");
+      }
+      const { result } = await response.json();
+      return result;
+      setContent((prevContent) => prevContent + result + "\\n\\n\\n");
+    } catch (error) {
+      console.error("Error:", error);
+      return "";
+    }
+  };
+
   const handlePaperContent = async () => {
     setLoadingAll(true);
-    var cont = "";
+
     for (const chapter of outline) {
       const name = chapter.chapter_name;
       for (const section of chapter.content) {
-        try {
-          const response = await fetch("/api/section", {
+        if (section.word_count <= 1000) {
+          console.log("below 1000");
+          console.log(section);
+          const section_content = await generateSection(
+            topic,
+            section.description,
+            section.section_name,
+            section.word_count
+          );
+          section.content = section_content;
+        } else {
+          console.log("beyond 1000");
+          console.log(section);
+          const response = await fetch("/api/split", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              abstract: abs,
-              desc: section.description,
               title: section.section_name,
+              desc: section.description,
               count: section.word_count,
             }),
           });
-
           if (!response.ok) {
             throw new Error("API request failed");
           }
           const { result } = await response.json();
-          cont += result + "\n\n\n";
-          setContent(cont);
-        } catch (error) {
-          console.error("Error:", error);
+          const parts_result: IPart[] = JSON.parse(result);
+          var content_multiple_parts = "";
+          for (const part of parts_result) {
+            console.log(part);
+            const res = await generateSection(
+              topic,
+              part.desc,
+              part.part_name,
+              part.count
+            );
+            content_multiple_parts += res + "\n";
+          }
+          section.content = content_multiple_parts;
         }
       }
     }
-    setContent(cont);
+    await fetch("/api/word", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: topic,
+        jsonStr: JSON.stringify(outline),
+      }),
+    });
     setLoadingAll(false);
+    setDownload(true);
+  };
+
+  const downloadPaper = async () => {
+    try {
+      // 发送 API 请求获取文件
+      const response = await fetch("/api/download", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: topic }),
+      });
+    } catch (error) {
+      console.error("下载文件出错:", error);
+    }
   };
 
   return (
@@ -200,6 +270,7 @@ const AiWritingForm = () => {
             rows={4}
             placeholder="大纲"
             value={show_outline}
+            disabled
             onChange={(e) => setShowOutline(e.target.value)}
           ></TextareaAutosize>
         </div>
@@ -216,7 +287,8 @@ const AiWritingForm = () => {
             rows={4}
             placeholder="全文"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            disabled
+            // onChange={(e) => setContent(e.target.value)}
           ></TextareaAutosize>
         </div>
       </div>
@@ -233,6 +305,14 @@ const AiWritingForm = () => {
       >
         {loadingAll ? "正在生成..." : "生成全文"}
       </button>
+      {!loadingAll && (
+        <button
+          className="block w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600 focus:outline-none mt-4 text-center"
+          onClick={downloadPaper}
+        >
+          Download Paper
+        </button>
+      )}
     </div>
   );
 };

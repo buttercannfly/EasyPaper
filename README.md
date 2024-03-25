@@ -2,7 +2,7 @@
 
 EasyPaper is an open source project designed to simplify the academic writing process. Whether you are writing a thesis, journal article, or laboratory report, EasyPaper can provide you with the tools and resources you need to help you improve your writing efficiency and achieve higher writing efficiency and high-quality academic articles.
 
-## 功能清单
+## Basic Features
 
 - [x] 生成大纲
 - [x] 生成中英文摘要
@@ -12,7 +12,7 @@ EasyPaper is an open source project designed to simplify the academic writing pr
 - [ ] 生成中英文文献综述
 - [ ] 插入图表
 
-## 高级功能
+## Advanced Features
 
 - [ ] 思维导图
 - [ ] 答辩 PPT
@@ -20,6 +20,22 @@ EasyPaper is an open source project designed to simplify the academic writing pr
 - [ ] 论文去重
 
 ## 贡献指南
+
+## Key issues
+
+- How to make chatgpt write longer ?
+
+  > Limit the maximum of response is easy, just limit the parameter _max_tokens_ to achieve that.
+
+  > However, when you want Chatgpt write more (2000 words? 5000 words?) at once. It becomes a problem.
+
+Resolved: When we need to write context longer than 1000 words, we will the task split into several subtasks.
+
+- Stable Json Output ?
+
+  > When you ask Chatgpt to give a JSON response, it randomly returns a bad JSON and it can't be parsed.
+
+Resolved: When we need a JSON response, we will verify the JSON again and enable a retry method. Besides, some models support only respond with JSON objects. For us, we use the gpt-3.5-turbo-16k-0613, it doesn't support.
 
 ## 免责声明
 

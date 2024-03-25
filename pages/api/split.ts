@@ -11,25 +11,20 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "POST") {
-    const { mainTitle, desc, title, count } = req.body;
+    const { title, count, desc } = req.body;
 
     const reply = await chatCompletion(
-      "这是本文的标题：<" +
-        mainTitle +
-        ">, 请你完成小节: " +
+      "这是本节的标题：<" +
         title +
-        "的书写， 该小节的描述是" +
+        ">, 本节描述为<" +
         desc +
-        "。请严格要求回复字数不少于 " +
+        "> 目前本节要求字数多于" +
         count +
-        "字!!!" +
-        ", 请严格要求回复字数不少于 " +
-        count +
-        "字!!!" +
-        ", 请严格要求回复字数不少于 " +
-        count +
-        "字!!!"
+        "字. 请你拆分成不超过三个小节, 保证每小节字数小于1000即可. " +
+        "请保证回复以满足JSON格式,样例返回JSON为 " +
+        '[{"part_name": "", "desc": "", "count": 200}]'
     );
+    console.log(reply);
     res.status(200).json({ result: reply });
   }
 }

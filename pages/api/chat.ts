@@ -11,7 +11,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   if (req.method === "POST") {
-    const { message } = req.body;
+    const { message, min } = req.body;
 
     const reply = await chatCompletion(message);
     res.status(200).json({ result: reply });
