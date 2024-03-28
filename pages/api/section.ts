@@ -14,9 +14,9 @@ export default async function handler(
   if (req.method === "POST") {
     const { mainTitle, desc, title, count, abstract } = req.body;
     const sample_json = [
-      "paragraph1_content",
-      "paragraph2_content",
-      "paragraph3_content",
+      { title: "paragraph_title", content: "paragraph: content" },
+      { title: "paragraph_title", content: "paragraph: content" },
+      { title: "paragraph_title", content: "paragraph: content" },
     ];
 
     const reply = await chatCompletion(
