@@ -15,3 +15,9 @@ export interface ISection {
   word_count: number;
   content?: string;
 }
+
+export interface IReference {
+  name: string;
+  authors: string;
+  year: string;
+}

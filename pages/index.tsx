@@ -1,4 +1,4 @@
-import { IOutline, IPart } from "@/type";
+import { IOutline, IPart, IReference } from "@/type";
 import React, { useEffect, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -26,25 +26,20 @@ const AiWritingForm = () => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
+  const [loadingReference, setLoadingReference] = useState(false);
+  const [reference, setReference] = useState("");
 
   const handleGenerateOutline = async () => {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
+      const response = await fetch("/api/abstract", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message:
-            "请为以下论文题目生成摘要,  <" +
-            topic +
-            ">, 不要添加任何解释、说明或评论。请严格按照以下两个要求进行回复" +
-            "1. 生成字数至少300字" +
-            "2. 请严格按照以下JSON返回结果" +
-            ' {"abstract":"", "keywords":[] }' +
-            "3. 保证结果符合JSON格式定义",
+          topic,
         }),
       });
 
@@ -66,19 +61,15 @@ const AiWritingForm = () => {
     }
 
     try {
-      const response = await fetch("/api/chat", {
+      console.log(abs);
+      const response = await fetch("/api/outline", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message:
-            "你现在要写一篇总字数两万字的论文,请先为以下论文题目生成1000字的大纲, 包含中内外研究现状, 并且安排好各个小节的字数以满足总字数两万以上的要求, <" +
-            topic +
-            ">, 摘要为<" +
-            abs +
-            ">。 请注意,我只需要你返回 JSON数组格式的结果!! 注意满足JSON数组格式!!注意满足JSON数组格式!! 注意满足JSON数组格式!!不要添加任何解释、说明或评论。请严格按照以下JSON返回结果。确保work_count之和大于两万。" +
-            '[{"chapter_name": "章标题","content": [{"section_name": "小节标题", "description": "小节描述", "word_count": 400}]}, {"section_name": "小节标题", "description": "小节描述", "word_count": 500}]} ].',
+          topic,
+          abs,
         }),
       });
 
@@ -110,7 +101,8 @@ const AiWritingForm = () => {
     mainTitle: string,
     desc: string,
     title: string,
-    count: number
+    count: number,
+    abstract: string
   ) => {
     try {
       const response = await fetch("/api/section", {
@@ -123,6 +115,7 @@ const AiWritingForm = () => {
           desc,
           title,
           count,
+          abstract,
         }),
       });
 
@@ -130,8 +123,9 @@ const AiWritingForm = () => {
         throw new Error("API request failed");
       }
       const { result } = await response.json();
-      return result;
       setContent((prevContent) => prevContent + result + "\\n\\n\\n");
+
+      return result;
     } catch (error) {
       console.error("Error:", error);
       return "";
@@ -151,7 +145,8 @@ const AiWritingForm = () => {
             topic,
             section.description,
             section.section_name,
-            section.word_count
+            section.word_count,
+            abs
           );
           section.content = section_content;
         } else {
@@ -180,7 +175,8 @@ const AiWritingForm = () => {
               topic,
               part.desc,
               part.part_name,
-              part.count
+              part.count,
+              abs
             );
             content_multiple_parts += res + "\n";
           }
@@ -214,6 +210,33 @@ const AiWritingForm = () => {
       });
     } catch (error) {
       console.error("下载文件出错:", error);
+    }
+  };
+
+  const generateReference = async () => {
+    try {
+      const response = await fetch("/api/reference", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mainTitle: topic,
+          abstract,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("API request failed");
+      }
+      const { result, result2 } = await response.json();
+      const json_en: IReference[] = JSON.parse(result);
+      const json_ch: IReference[] = JSON.parse(result2);
+      setReference(JSON.stringify(json_en) + "\n" + JSON.stringify(json_ch));
+      return result;
+    } catch (error) {
+      console.error("Error:", error);
+      return "";
     }
   };
 
@@ -279,6 +302,23 @@ const AiWritingForm = () => {
       <div className="mb-8">
         <div className="flex items-center mb-4">
           <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+          <span className="text-gray-700 font-bold">参考文献</span>
+        </div>
+        <div className="ml-4">
+          <TextareaAutosize
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+            rows={4}
+            placeholder="大纲"
+            value={reference}
+            disabled
+            // onChange={(e) => setShowOutline(e.target.value)}
+          ></TextareaAutosize>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <div className="flex items-center mb-4">
+          <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
           <span className="text-gray-700 font-bold">论文全文</span>
         </div>
         <div className="ml-4">
@@ -311,6 +351,14 @@ const AiWritingForm = () => {
           onClick={downloadPaper}
         >
           Download Paper
+        </button>
+      )}
+      {!loadingReference && (
+        <button
+          className="block w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-600 focus:outline-none mt-4 text-center"
+          onClick={generateReference}
+        >
+          Generate Reference
         </button>
       )}
     </div>
